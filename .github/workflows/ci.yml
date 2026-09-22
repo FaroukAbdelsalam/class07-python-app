@@ -1,7 +1,9 @@
 name: Class 07 delivery
 
-# Step 1: start a run on each push. Restrict this trigger in Step 2.
-on: [push]
+# Step 2: start a run only when main receives a push.
+on:
+  push:
+    branches: [main]
 
 permissions:
   contents: read
