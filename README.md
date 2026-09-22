@@ -329,3 +329,4 @@ pending and label local observations **local simulation**; do not invent run URL
 Technical choices checked 22 September 2026. The supplied action is pinned to the
 full commit resolved from `actions/checkout` v6 on that date. Account policies and
 permissions still require classroom preflight.
+Branch filter check.
