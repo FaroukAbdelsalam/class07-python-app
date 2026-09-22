@@ -1,0 +1,29 @@
+  # Step 3: append this job under the EXISTING jobs: key, alongside test:.
+  # Keep the main-only push trigger completed in Step 2.
+  package:
+    needs: test
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: read # TODO 1: allow this job to publish a package
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Name this build
+        run: |
+          repository="ghcr.io/${GITHUB_REPOSITORY,,}"
+          echo "IMAGE=$repository:sha-$GITHUB_SHA-run-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" >> "$GITHUB_ENV"
+      - name: Build once
+        run: exit 1 # TODO 2: build with platform, revision/source labels and IMAGE tag
+      - name: Test the packaged application
+        run: exit 1 # TODO 3: run the supplied image-verification helper
+      - name: Authenticate to the registry
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: printf '%s' "$REGISTRY_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+      - name: Publish the tested image and record its digest
+        run: exit 1 # TODO 4: run the supplied publication helper
+      - name: Log out
+        if: always()
+        run: docker logout ghcr.io
