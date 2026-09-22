@@ -21,3 +21,40 @@ jobs:
           persist-credentials: false
       - name: Source contract
         run: python3 -m unittest -v
+
+  # Step 3: build, check and publish the image, only after test passes.
+  package:
+    needs: test
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write # TODO 1 done: this job may publish a package
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Name this build
+        run: |
+          repository="ghcr.io/${GITHUB_REPOSITORY,,}"
+          echo "IMAGE=$repository:sha-$GITHUB_SHA-run-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" >> "$GITHUB_ENV"
+      - name: Build once
+        # TODO 2 done: one amd64 build with source/revision labels and the IMAGE tag
+        run: |
+          source_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+          docker build --platform linux/amd64 --provenance=false \
+            --label "org.opencontainers.image.revision=$GITHUB_SHA" \
+            --label "org.opencontainers.image.source=$source_url" \
+            -t "$IMAGE" .
+      - name: Test the packaged application
+        # TODO 3 done: start that same image and check /health + 3 scores
+        run: bash ci/verify_image.sh "$IMAGE"
+      - name: Authenticate to the registry
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: printf '%s' "$REGISTRY_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+      - name: Publish the tested image and record its digest
+        # TODO 4 done: push the tested image and write the release record
+        run: bash ci/publish.sh "$IMAGE"
+      - name: Log out
+        if: always()
+        run: docker logout ghcr.io
